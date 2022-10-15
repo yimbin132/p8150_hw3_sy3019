@@ -159,14 +159,41 @@ view(accel_df)
 accel_df %>%
   group_by(minute, week, day) %>%
   summarize(total_act = sum(activity)) %>%
-   pivot_wider(
-    names_from = "day",
-    values_from = "total_act"
-  ) %>%
     ggplot(aes(x = minute, y = total_act, color = week)) + 
     geom_line() + 
     theme(legend.position = "bottom")
 ```
 
+###Problem 3 
+####Loading, tidying and wrangling the data
+Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
+Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+```{r}
+library(p8105.datasets)
+data("ny_noaa")
 
+view(tidy_noaa, n=10)
+tidy_noaa
+tidy_noaa = ny_noaa %>%
+  janitor::clean_names() %>%
+  dplyr::mutate(year = lubridate::year(date), 
+                month = lubridate::month(date), 
+                day = lubridate::day(date)) %>%
+  mutate(tmax = as.numeric(tmax), 
+         tmin = as.numeric(tmin),
+         tmax = tmax/10, tmin = tmin/10
+         ) 
+```
+####a two-panel plot showing the average max temperature in January and in July in each station
+```{r}
+tidy_noaa %>%
+  filter(month == c("1", "6")) %>%
+  group_by(id, year, month) %>%
+  summarize(mean_tmax = mean(tmax, na.rm = TRUE)) %>%
+  ggplot(aes(x = year, y = mean_tmax, group = id)) + 
+    geom_line() + 
+    facet_grid(~month) +
+  theme(legend.position = "bottom")
+```
 
