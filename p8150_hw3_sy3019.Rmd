@@ -128,12 +128,16 @@ accel_df = read_csv("./accel_data.csv") %>%
     values_to = "activity",
   ) %>%
   mutate(
+    day = factor(day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday", "Sunday"), ordered = TRUE), 
     weekday_weekend = case_when(
       day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") ~ "weekday",
       day %in% c("Saturday", "Sunday" ~ "weekdend") ~ "weekend"),
     weekday_weekend = as_factor(weekday_weekend),
     minute = as.numeric(minute)
   )
+
+accel_df
+view(accel_df)
 ```
 ####A total activity variable for each day
 ```{r}
@@ -148,6 +152,20 @@ accel_df %>%
 
 print(accel_df)
 view(accel_df)
+```
+
+####Creating single-panel plot 
+```{r}
+accel_df %>%
+  group_by(minute, week, day) %>%
+  summarize(total_act = sum(activity)) %>%
+   pivot_wider(
+    names_from = "day",
+    values_from = "total_act"
+  ) %>%
+    ggplot(aes(x = minute, y = total_act, color = week)) + 
+    geom_line() + 
+    theme(legend.position = "bottom")
 ```
 
 
