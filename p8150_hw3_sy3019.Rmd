@@ -135,7 +135,20 @@ accel_df = read_csv("./accel_data.csv") %>%
     minute = as.numeric(minute)
   )
 ```
+####A total activity variable for each day
+```{r}
+accel_df %>%
+  group_by(week, day) %>%
+  summarize(total_act = sum(activity)) %>%
+  pivot_wider(
+    names_from = "day",
+    values_from = "total_act"
+  ) %>%
+  knitr::kable(digits = 2)
 
+print(accel_df)
+view(accel_df)
+```
 
 
 
