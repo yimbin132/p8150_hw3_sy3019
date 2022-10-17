@@ -116,7 +116,8 @@ instacart %>%
   knitr::kable(digits = 2)
 ```
 
-###Problem 2
+### Problem 2
+
 #### load, tidy, and wrangle the data
 ```{r}
 accel_df = read_csv("./accel_data.csv") %>%
@@ -136,11 +137,10 @@ accel_df = read_csv("./accel_data.csv") %>%
     minute = as.numeric(minute)
   )
 
-accel_df
 ```
 For the data set, there are `week`, `day_id`, `day`, `minute`, `activity`, and `weekday_weekend` variables. There are `r nrow(accel_df)` observations and `r ncol(accel_df)`  columns in this dataset. 
 
-####A total activity variable for each day
+#### A total activity variable for each day
 ```{r}
 accel_df %>%
   group_by(week, day) %>%
@@ -151,12 +151,10 @@ accel_df %>%
   ) %>%
   knitr::kable(digits = 2)
 
-print(accel_df)
-view(accel_df)
 ```
 There is no apparant trend except the `Sunday` activity generally decreased as the week progressed, and `Wednesday` had consistant activity throughout 5 weeks. Week 4 and Week 5 value of the `Saturday` had value of 1440, which is total number of minute per day and probably data entry mistakes.    
 
-####Creating single-panel plot 
+#### Creating single-panel plot 
 ```{r}
 accel_df %>%
   group_by(minute, week, day) %>%
@@ -167,15 +165,16 @@ accel_df %>%
     x = "Minute",
     y = "Total activity"
   ) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5) + geom_line(alpha = 0.3) +
     theme(legend.position = "bottom")
 ```
 
-###Problem 3 
-####Loading, tidying and wrangling the data
-Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
-Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
-Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+Based on the graph, most of the activity is below 2500. On Sunday, most peak of activities are around at 11 am. for the weekdays, there are peaks of activities at around 7 am or 8-9 pm. There seems to be more activities on Friday. 
+
+### Problem 3 
+
+#### Loading, tidying and wrangling the data
+
 ```{r}
 library(p8105.datasets)
 data("ny_noaa")
@@ -186,24 +185,31 @@ tidy_noaa = ny_noaa %>%
                 day = lubridate::day(date)) %>%
   mutate(tmax = as.numeric(tmax), 
          tmin = as.numeric(tmin),
-         tmax = tmax/10, tmin = tmin/10
+         tmax = tmax/10, tmin = tmin/10,
+         snow = ifelse(snow == -13, NA, snow),
          )
+
+```
+```{r, eval = FALSE}
 table(tidy_noaa$snow)
 
 tidy_noaa %>%
-  group_by (snow) %>%
+  group_by(snow) %>%
   summarize(n = n()) %>%
   arrange(desc(n))
 ```
-The most observed value for snowfall was 0 with 2008508 observation, and out of the entire year and location, most of them do not experience snow, so it makes sense to have value of 0 as most observed value. there 
-####a two-panel plot showing the average max temperature in January and in July in each station
+
+The most observed value for snowfall was 0 with 2008508 observation, and out of the entire year and location, most of them do not experience snow, so it makes sense to have value of 0 as most observed value. There was a value of -13 for snow, which does not make sense, so I deleted it.  
+
+#### A two-panel plot showing the average max temperature in January and in July in each station
 ```{r}
 tidy_noaa %>%
   filter(month == c("1", "7")) %>%
   group_by(id, year, month) %>%
   summarize(mean_tmax = mean(tmax, na.rm = TRUE)) %>%
   ggplot(aes(x = year, y = mean_tmax), group = id) + 
-    geom_line() + geom_point(alpha=0.3) + 
+    geom_line() + geom_point(alpha = 0.3) + 
+    geom_smooth(aes(x = year, y = mean_tmax), color = "green", show.legend = FALSE) +
     facet_grid(~month, labeller = labeller(month = c("1" = "January", "7" = "July"))) +
    labs(
     title = "Average Max Temperature",
@@ -212,7 +218,9 @@ tidy_noaa %>%
   )
   theme(legend.position = "none")
 ```
-####(i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option)
+January has lower average temperature, and more fluctuating temperature compared to July. There are some noticeable outliers at around year 2004 for January, and at around year 1988 for July.  
+
+#### (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option)
 
 ```{r}
 tmax_tmin = 
@@ -236,10 +244,10 @@ snow100 =
     snow < 100) %>%
   mutate(year = as.factor(year)) %>%
   ggplot(aes(x = year, y = snow)) +
-  geom_violin(aes(fill = year), color = "blue", alpha = .5)+
+  geom_violin(aes(fill = year), color = "blue", alpha = .5) +
   theme(legend.position = "none") +
   labs(
-    title = "The distribution of snowfall, 0 mm to 100mm by year",
+    title = "The snowfall of 0 mm to 100mm by year",
     x = "Year",
     y = "Snowfall (mm)"
   ) +
