@@ -160,7 +160,7 @@ accel_df %>%
   group_by(minute, week, day) %>%
   summarize(total_act = sum(activity)) %>%
     ggplot(aes(x = minute, y = total_act, color = week)) + 
-    geom_line() + 
+    geom_point(alpha = 0.5) + 
     theme(legend.position = "bottom")
 ```
 
@@ -172,8 +172,6 @@ Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a
 ```{r}
 library(p8105.datasets)
 data("ny_noaa")
-
-view(tidy_noaa, n=10)
 tidy_noaa
 tidy_noaa = ny_noaa %>%
   janitor::clean_names() %>%
@@ -188,12 +186,43 @@ tidy_noaa = ny_noaa %>%
 ####a two-panel plot showing the average max temperature in January and in July in each station
 ```{r}
 tidy_noaa %>%
-  filter(month == c("1", "6")) %>%
+  filter(month == c("1", "7")) %>%
   group_by(id, year, month) %>%
   summarize(mean_tmax = mean(tmax, na.rm = TRUE)) %>%
-  ggplot(aes(x = year, y = mean_tmax, group = id)) + 
-    geom_line() + 
-    facet_grid(~month) +
+  ggplot(aes(x = year, y = mean_tmax), group = id) + 
+    geom_line() + geom_point(alpha=0.3) + 
+    facet_grid(~month, labeller = labeller(month = c("1" = "January", "7" = "July"))) +
+   labs(
+    title = "Average Max Temperature",
+    x = "Year",
+    y = "Temperature (c)"
+  )
+  theme(legend.position = "none")
+```
+####a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year
+
+```{r}
+tidy_noaa
+tmax_tmin = 
+  tidy_noaa %>%
+  ggplot(aes(x = tmax, y = tmin)) +
+  geom_boxplot()
+
+
+prcp_dens_p = 
+  weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = 
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
   theme(legend.position = "bottom")
+
+
 ```
 
