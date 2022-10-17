@@ -137,8 +137,9 @@ accel_df = read_csv("./accel_data.csv") %>%
   )
 
 accel_df
-view(accel_df)
 ```
+For the data set, there are `week`, `day_id`, `day`, `minute`, `activity`, and `weekday_weekend` variables. There are `r nrow(accel_df)` observations and `r ncol(accel_df)`  columns in this dataset. 
+
 ####A total activity variable for each day
 ```{r}
 accel_df %>%
@@ -153,13 +154,19 @@ accel_df %>%
 print(accel_df)
 view(accel_df)
 ```
+There is no apparant trend except the `Sunday` activity generally decreased as the week progressed, and `Wednesday` had consistant activity throughout 5 weeks. Week 4 and Week 5 value of the `Saturday` had value of 1440, which is total number of minute per day and probably data entry mistakes.    
 
 ####Creating single-panel plot 
 ```{r}
 accel_df %>%
   group_by(minute, week, day) %>%
   summarize(total_act = sum(activity)) %>%
-    ggplot(aes(x = minute, y = total_act, color = week)) + 
+    ggplot(aes(x = minute, y = total_act, color = day)) + 
+   labs(
+    title = "The 24-hour activity time courses for each day ",
+    x = "Minute",
+    y = "Total activity"
+  ) +
     geom_point(alpha = 0.5) + 
     theme(legend.position = "bottom")
 ```
@@ -172,7 +179,6 @@ Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a
 ```{r}
 library(p8105.datasets)
 data("ny_noaa")
-tidy_noaa
 tidy_noaa = ny_noaa %>%
   janitor::clean_names() %>%
   dplyr::mutate(year = lubridate::year(date), 
@@ -181,8 +187,15 @@ tidy_noaa = ny_noaa %>%
   mutate(tmax = as.numeric(tmax), 
          tmin = as.numeric(tmin),
          tmax = tmax/10, tmin = tmin/10
-         ) 
+         )
+table(tidy_noaa$snow)
+
+tidy_noaa %>%
+  group_by (snow) %>%
+  summarize(n = n()) %>%
+  arrange(desc(n))
 ```
+The most observed value for snowfall was 0 with 2008508 observation, and out of the entire year and location, most of them do not experience snow, so it makes sense to have value of 0 as most observed value. there 
 ####a two-panel plot showing the average max temperature in January and in July in each station
 ```{r}
 tidy_noaa %>%
@@ -199,30 +212,44 @@ tidy_noaa %>%
   )
   theme(legend.position = "none")
 ```
-####a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year
+####(i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option)
 
 ```{r}
-tidy_noaa
 tmax_tmin = 
   tidy_noaa %>%
-  ggplot(aes(x = tmax, y = tmin)) +
-  geom_boxplot()
+  ggplot(aes(x = tmax, y = tmin), color = id) +
+  geom_hex(alpha = 0.9) +
+  theme(legend.position = "right") +
+  labs(
+    title = "tmax vs tmin",
+    x = "Maximum daily temperature (c)",
+    y = "Minimum daily temperature (c)"
+  )
+```
+#### (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year 
 
+```{r}
+snow100 = 
+  tidy_noaa %>%
+  filter(
+    snow > 0, 
+    snow < 100) %>%
+  mutate(year = as.factor(year)) %>%
+  ggplot(aes(x = year, y = snow)) +
+  geom_violin(aes(fill = year), color = "blue", alpha = .5)+
+  theme(legend.position = "none") +
+  labs(
+    title = "The distribution of snowfall, 0 mm to 100mm by year",
+    x = "Year",
+    y = "Snowfall (mm)"
+  ) +
+     theme(axis.text.x = element_text(angle = 270))
+```
 
-prcp_dens_p = 
-  weather_df %>% 
-  filter(prcp > 0) %>% 
-  ggplot(aes(x = prcp, fill = name)) + 
-  geom_density(alpha = .5) + 
-  theme(legend.position = "none")
+#### two-panel plot combining both plots
+```{r}
+tmax_tmin + snow100 
 
-tmax_date_p = 
-  weather_df %>% 
-  ggplot(aes(x = date, y = tmax, color = name)) + 
-  geom_point(alpha = .5) +
-  geom_smooth(se = FALSE) + 
-  theme(legend.position = "bottom")
-
-
+ggsave("tmax_tmin + snow100.pdf", width = 10, height = 5)
 ```
 
